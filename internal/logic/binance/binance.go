@@ -8,7 +8,6 @@ import (
 	"github.com/gogf/gf/v2/container/gvar"
 	"github.com/gogf/gf/v2/errors/gerror"
 	"github.com/gorilla/websocket"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -47,12 +46,14 @@ func getBinanceServerTime() int64 {
 		return 0
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	var serverTimeResponse struct {
 		ServerTime int64 `json:"serverTime"`
@@ -126,12 +127,14 @@ func (s *sBinance) GetBinancePositionSide(apiK, apiS string) string {
 		return ""
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	// 读取响应
 	body, err := ioutil.ReadAll(resp.Body)
@@ -169,25 +172,28 @@ func (s *sBinance) GetLatestPrice(symbol string) string {
 	resp, err := http.Get(requestURL)
 	if err != nil {
 		log.Println("获取价格错误：", err)
+		return ""
 	}
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			log.Println("获取价格错误：", err)
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	// 读取响应数据
-	body, err := ioutil.ReadAll(resp.Body)
+	var data *entity.LatestPrice
+	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		log.Println("获取价格错误：", err)
+		log.Println("解析 JSON 错误：", err)
+		return ""
 	}
 
-	// 解析 JSON 响应
-	var data *entity.LatestPrice
-	err = json.Unmarshal(body, &data)
-	if err != nil {
-		log.Println("获取价格错误：", err)
+	if data == nil {
+		log.Println("解析结果为空")
+		return ""
 	}
 
 	return data.Price
@@ -239,12 +245,14 @@ func (s *sBinance) GetWalletInfo(apiK, apiS string) []*entity.WalletInfo {
 		return res
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	// 读取响应
 	body, err := ioutil.ReadAll(resp.Body)
@@ -309,12 +317,14 @@ func (s *sBinance) GetBinanceInfo(apiK, apiS string) string {
 		return ""
 	}
 
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	// 读取响应
 	body, err := ioutil.ReadAll(resp.Body)
@@ -375,12 +385,14 @@ func (s *sBinance) RequestBinancePositionSide(positionSide string, apiKey string
 	}
 
 	// 结果
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			log.Println(err)
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -412,12 +424,14 @@ func (s *sBinance) GetBinanceFuturesPairs() ([]*entity.BinanceSymbolInfo, error)
 	if err != nil {
 		return nil, err
 	}
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	// 读取响应体
 	body, err := ioutil.ReadAll(resp.Body)
@@ -481,12 +495,14 @@ func (s *sBinance) RequestBinanceOrder(symbol string, side string, orderType str
 	}
 
 	// 结果
-	defer func(Body io.ReadCloser) {
-		err = Body.Close()
-		if err != nil {
-			log.Println(err)
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
 		}
-	}(resp.Body)
+	}()
 
 	b, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -570,7 +586,14 @@ func (s *sBinance) GetBinancePositionInfo(apiK, apiS string) []*entity.BinancePo
 		log.Println("Error sending request:", err)
 		return nil
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
+		}
+	}()
 
 	// 读取响应
 	body, err := ioutil.ReadAll(resp.Body)
@@ -613,7 +636,14 @@ func (s *sBinance) CreateListenKey(apiKey string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -642,7 +672,14 @@ func (s *sBinance) RenewListenKey(apiKey string) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if resp != nil && resp.Body != nil {
+			err := resp.Body.Close()
+			if err != nil {
+				log.Println("关闭响应体错误：", err)
+			}
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := ioutil.ReadAll(resp.Body)

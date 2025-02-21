@@ -1060,7 +1060,13 @@ func (s *sListenAndOrder) OrderAtPlat(ctx context.Context, doValue *entity.DoVal
 		return
 	}
 
-	userMoney := s.UsersMoney.Get(doValue.UserId).(float64)
+	userMoneyTmp := s.UsersMoney.Get(doValue.UserId)
+	if nil == userMoneyTmp {
+		log.Println("OrderAtPlat，交易员保证金错误，一直为0:", user, currentData, traderMoney, userMoneyTmp)
+		return
+	}
+
+	userMoney := userMoneyTmp.(float64)
 	if lessThanOrEqualZero(userMoney, 1e-7) {
 		log.Println("OrderAtPlat，用户保证金错误:", user, currentData, userMoney)
 		return
@@ -2703,7 +2709,7 @@ func (s *sListenAndOrder) SetSystemUserPosition(ctx context.Context, system uint
 					if !exact {
 						fmt.Println("转换过程中可能发生了精度损失", tmpExecutedQty)
 					}
-					
+
 					if floatEqual(tmpExecutedQty, 0, 1e-7) {
 						tmpExecutedQty = 0
 					}
