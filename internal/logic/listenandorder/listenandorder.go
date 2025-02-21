@@ -238,7 +238,7 @@ func (s *sListenAndOrder) PullAndSetBaseMoneyNewGuiTuAndUser(ctx context.Context
 				}
 			}
 		} else {
-			log.Println("保证金为0", vGlobalUsers)
+			//log.Println("保证金为0", vGlobalUsers)
 		}
 
 		time.Sleep(300 * time.Millisecond)
